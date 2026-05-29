@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Env / секреты
+.env
+*.local
+
+# IDE / ОС
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
