@@ -85,7 +85,11 @@ jailtrecker/
 │           ├── Login.tsx
 │           ├── Dashboard.tsx    # карта + поднадзорные + инциденты (live)
 │           └── admin/           # Admin.tsx + 8 вкладок (декомпозировано)
-└── simulator/simulate.py        # HTTP-симулятор браслета (локации, tamper, батарея)
+├── simulator/simulate.py        # HTTP-симулятор браслета (локации, tamper, батарея)
+└── tracker_simulator/            # TCP-симулятор DDX04 (протокол Xexun)
+    ├── simulator.py              # основной скрипт
+    ├── requirements.txt          # зависимости
+    └── .env.example              # пример конфига
 ```
 
 ## Сущности БД
@@ -164,11 +168,48 @@ npm install
 npm run dev   # http://localhost:5173, проксирует /api и /ws на :8080
 ```
 
-Симулятор (API-key возьмите из вкладки «Браслеты» после создания устройства):
+HTTP-симулятор (API-key возьмите из вкладки «Браслеты» после создания устройства):
 ```bash
 cd simulator
 pip install -r requirements.txt
 python simulate.py --api-key <API_KEY> --imei 860000000000001
+```
+
+TCP-симулятор DDX04 (Xexun) — для тестирования gateway напрямую:
+```bash
+cd tracker_simulator
+pip install -r requirements.txt
+cp .env.example .env
+# настроить SERVER_HOST/SERVER_PORT под свой gateway
+python simulator.py --mode normal
+```
+
+## Симулятор DDX04 (Xexun TCP)
+
+В `tracker_simulator/` — симулятор браслета DDX04, отправляет данные по TCP напрямую (протокол Xexun).
+Полезен для тестирования TCP-gateway без реального устройства.
+
+### Режимы (`--mode`)
+
+| Режим | Описание |
+|---|---|
+| `normal`   | GPS-пакеты каждые INTERVAL секунд |
+| `sos`      | На 3-м пакете — SOS, затем обычные GPS |
+| `geofence` | Через GEOFENCE_BREACH_AFTER пакетов — выход за зону |
+| `offline`  | На 3-м пакете — обрыв соединения |
+
+### Пример запуска
+
+```bash
+cd tracker_simulator
+python simulator.py --mode geofence
+```
+
+Вывод:
+```
+[2026-05-29 12:00:00] [GPS]     lat=54.8645 lon=69.1386 speed=2.3 battery=85% signal=OK
+[2026-05-29 12:01:00] [GPS]     lat=54.8648 lon=69.1389 speed=1.7 battery=85% signal=OK
+[2026-05-29 12:02:00] [SOS]     lat=54.8651 lon=69.1392 ТРЕВОГА!
 ```
 
 ## Дорожная карта
@@ -179,4 +220,3 @@ python simulate.py --api-key <API_KEY> --imei 860000000000001
 - [ ] Полный разбор бинарного протокола HC02 в gateway (сейчас — скелет кадра)
 - [ ] Детектор `device_offline` по `last_seen_at` (фоновая задача)
 - [ ] Интеграция с УИС, экспорт отчётов
-```
